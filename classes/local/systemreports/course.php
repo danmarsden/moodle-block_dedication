@@ -85,10 +85,10 @@ class course extends system_report {
         $groupsalias = $groupsentity->get_table_alias('groups');
 
         $groupjointype = "LEFT JOIN";
-        if ($PAGE->course->groupmode == VISIBLEGROUPS || has_capability('moodle/site:accessallgroups', $PAGE->context)) {
-            $visiblegroups = groups_get_all_groups($PAGE->course->id, 0, $PAGE->course->defaultgroupingid, 'g.id');
+        if ($PAGE->course->groupmode == VISIBLEGROUPS || has_capability('moodle/site:accessallgroups', $this->get_context())) {
+            $visiblegroups = groups_get_all_groups($this->get_context()->instanceid, 0, $PAGE->course->defaultgroupingid, 'g.id');
         } else {
-            $visiblegroups = groups_get_all_groups($PAGE->course->id, $USER->id, $PAGE->course->defaultgroupingid, 'g.id');
+            $visiblegroups = groups_get_all_groups($this->get_context()->instanceid, $USER->id, $PAGE->course->defaultgroupingid, 'g.id');
             $groupjointype = "JOIN";
         }
 
@@ -171,11 +171,14 @@ class course extends system_report {
      * unique identifier
      */
     protected function add_filters(): void {
+        global $PAGE;
         $filters = [
             'user:fullname',
             'dedication:timespent',
-            'groups:group',
         ];
+        if ($PAGE->course->groupmode == VISIBLEGROUPS || has_capability('moodle/site:accessallgroups', $this->get_context())) {
+            $filters[] = 'groups:group';
+        }
 
         $this->add_filters_from_entities($filters);
     }
