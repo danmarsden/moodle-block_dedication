@@ -16,10 +16,11 @@
 
 namespace block_dedication\local\systemreports;
 
-use block_dedication\local\entities\{dedication, enrolment, groups};
+use block_dedication\local\entities\{dedication, groups};
 use core_reportbuilder\local\helpers\database;
 use core_reportbuilder\local\entities\user;
 use core_reportbuilder\local\report\action;
+use core_course\reportbuilder\local\entities\enrolment;
 use core_reportbuilder\system_report;
 use moodle_url;
 use pix_icon;
