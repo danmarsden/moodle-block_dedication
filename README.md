@@ -18,10 +18,10 @@ NOTE: This new version of the block differs from the original version in some si
 
 # Branches
 
-| Moodle version    | Branch             | Status |
-| ----------------- | ------------------ | ------------------ |
-| Moodle 4.0+       | `MOODLE_400_STABLE` | Beta |
-| Moodle 3.0 - 3.11 | `MOODLE_30_STABLE` | Old unsupported branch - pull requests welcome |
+| Moodle version    | Branch             |
+| ----------------- | ------------------ |
+| Moodle 4.0 - 4.3  | `MOODLE_400_STABLE` | 
+| Moodle 4.4        | `MOODLE_404_STABLE` |
 
 # How dedication time is estimated?
 Time is estimated based in the concepts of Session and Session duration applied

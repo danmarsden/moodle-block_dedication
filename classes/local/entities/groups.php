@@ -33,12 +33,12 @@ use lang_string;
 class groups extends base {
 
     /**
-     * Database tables that this entity uses and their default aliases
+     * Database tables that this entity uses
      *
      * @return array
      */
-    protected function get_default_table_aliases(): array {
-        return ['groups' => 'g'];
+    protected function get_default_tables(): array {
+        return ['groups'];
     }
 
     /**

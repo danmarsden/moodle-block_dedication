@@ -37,18 +37,17 @@ use core_reportbuilder\local\filters\duration;
 class dedication extends base {
 
     /**
-     * Database tables that this entity uses and their default aliases
+     * Database tables that this entity uses
      *
      * @return array
      */
-    protected function get_default_table_aliases(): array {
+    protected function get_default_tables(): array {
         return [
-            'block_dedication' => 'td',
-            'user' => 'auser',
-            'course' => 'c',
+            'block_dedication',
+            'user',
+            'course',
         ];
     }
-
     /**
      * The default title for this entity
      *
