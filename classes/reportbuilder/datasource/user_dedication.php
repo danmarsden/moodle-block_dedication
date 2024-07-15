@@ -29,8 +29,17 @@ namespace block_dedication\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
 use core_reportbuilder\local\entities\course;
+use core_course\reportbuilder\local\entities\course_category;
+use core_course\reportbuilder\local\entities\enrolment;
+use core_enrol\reportbuilder\local\entities\enrol;
 use core_reportbuilder\local\entities\user;
+use core_role\reportbuilder\local\entities\role;
 use block_dedication\local\entities\dedication;
+use core_group\reportbuilder\local\entities\group;
+use core_cohort\reportbuilder\local\entities\cohort;
+use core_course\reportbuilder\local\entities\access;
+use core_course\reportbuilder\local\entities\completion;
+use core_reportbuilder\local\helpers\database;
 
 /**
  * User dedication datasource.
@@ -56,28 +65,104 @@ class user_dedication extends datasource {
         $this->add_entity($dedication);
 
         // Add core user join.
-        $usercore = new user();
-        $usercorealias = $usercore->get_table_alias('user');
-        $usercorejoin = "JOIN {user} {$usercorealias} ON {$usercorealias}.id = {$dedicationalias}.userid";
-        $this->add_entity($usercore->add_join($usercorejoin));
+        $userentity = new user();
+        $user = $userentity->get_table_alias('user');
+        $usercorejoin = "JOIN {user} {$user} ON {$user}.id = {$dedicationalias}.userid";
+        $this->add_entity($userentity->add_join($usercorejoin));
 
-        $coursecore = new course();
-        $coursecorealias = $coursecore->get_table_alias('course');
-        $coursecorejoin = "JOIN {course} {$coursecorealias} ON {$coursecorealias}.id = {$dedicationalias}.courseid";
-        $this->add_entity($coursecore->add_join($coursecorejoin));
+        $courseentity = new course();
+        $course = $courseentity->get_table_alias('course');
+        $context = $courseentity->get_table_alias('context');
+        $coursecorejoin = "JOIN {course} {$course} ON {$course}.id = {$dedicationalias}.courseid";
+        $this->add_entity($courseentity->add_join($coursecorejoin));
 
-        $this->add_columns_from_entity($usercore->get_entity_name());
-        $this->add_columns_from_entity($coursecore->get_entity_name());
-        $this->add_columns_from_entity($dedication->get_entity_name());
+        // Join the course category entity.
+        $coursecatentity = new course_category();
+        $categories = $coursecatentity->get_table_alias('course_categories');
+        $this->add_entity($coursecatentity
+            ->add_join("JOIN {course_categories} {$categories} ON {$categories}.id = {$course}.category"));
 
-        $this->add_filters_from_entity($usercore->get_entity_name());
-        $this->add_filters_from_entity($coursecore->get_entity_name());
-        $this->add_filters_from_entity($dedication->get_entity_name());
+        // Join the enrolment method entity.
+        $enrolentity = new enrol();
+        $enrol = $enrolentity->get_table_alias('enrol');
+        $this->add_entity($enrolentity
+            ->add_join("LEFT JOIN {enrol} {$enrol} ON {$enrol}.courseid = {$course}.id"));
 
-        $this->add_conditions_from_entity($usercore->get_entity_name());
-        $this->add_conditions_from_entity($coursecore->get_entity_name());
-        $this->add_conditions_from_entity($dedication->get_entity_name());
+        // Join the enrolments entity.
+        $enrolmententity = (new enrolment())
+            ->set_table_alias('enrol', $enrol);
+        $userenrolment = $enrolmententity->get_table_alias('user_enrolments');
+        $this->add_entity($enrolmententity
+            ->add_joins($enrolentity->get_joins())
+            ->add_join("LEFT JOIN {user_enrolments} {$userenrolment} ON {$userenrolment}.enrolid = {$enrol}.id AND {$userenrolment}.userid = {$user}.id"));
 
+        // Join the role entity.
+        $roleentity = (new role())
+            ->set_table_alias('context', $context);
+        $role = $roleentity->get_table_alias('role');
+        $this->add_entity($roleentity
+            ->add_joins($userentity->get_joins())
+            ->add_join($courseentity->get_context_join())
+            ->add_join("LEFT JOIN {role_assignments} ras ON ras.contextid = {$context}.id AND ras.userid = {$user}.id")
+            ->add_join("LEFT JOIN {role} {$role} ON {$role}.id = ras.roleid")
+        );
+
+        // Join group entity.
+        $groupentity = (new group())
+            ->set_table_alias('context', $context);
+        $groups = $groupentity->get_table_alias('groups');
+
+        // Sub-select for all course group members.
+        $groupsinnerselect = "
+            SELECT grs.*, grms.userid
+              FROM {groups} grs
+              JOIN {groups_members} grms ON grms.groupid = grs.id";
+
+        $this->add_entity($groupentity
+            ->add_join($courseentity->get_context_join())
+            ->add_joins($userentity->get_joins())
+            ->add_join("
+                LEFT JOIN ({$groupsinnerselect}) {$groups}
+                       ON {$groups}.courseid = {$course}.id AND {$groups}.userid = {$user}.id")
+        );
+
+        // Join cohort entity.
+        $cohortentity = new cohort();
+        $cohortalias = $cohortentity->get_table_alias('cohort');
+        $cohortmemberalias = database::generate_alias();
+        $this->add_entity($cohortentity
+            ->add_joins($userentity->get_joins())
+            ->add_joins([
+                "LEFT JOIN {cohort_members} {$cohortmemberalias} ON {$cohortmemberalias}.userid = {$user}.id",
+                "LEFT JOIN {cohort} {$cohortalias} ON {$cohortalias}.id = {$cohortmemberalias}.cohortid",
+            ])
+        );
+
+        // Join completion entity.
+        $completionentity = (new completion())
+            ->set_table_aliases([
+                'course' => $course,
+                'user' => $user,
+            ]);
+        $completion = $completionentity->get_table_alias('course_completion');
+        $this->add_entity($completionentity
+            ->add_joins($userentity->get_joins())
+            ->add_join("
+                LEFT JOIN {course_completions} {$completion}
+                       ON {$completion}.course = {$course}.id AND {$completion}.userid = {$user}.id")
+        );
+
+        // Join course access entity.
+        $accessentity = (new access())
+            ->set_table_alias('user', $user);
+        $lastaccess = $accessentity->get_table_alias('user_lastaccess');
+        $this->add_entity($accessentity
+            ->add_joins($userentity->get_joins())
+            ->add_join("
+                LEFT JOIN {user_lastaccess} {$lastaccess}
+                       ON {$lastaccess}.userid = {$user}.id AND {$lastaccess}.courseid = {$course}.id"));
+
+        $this->add_all_from_entities();
     }
 
 

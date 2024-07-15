@@ -24,7 +24,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 
-$string['admin_filter_courseid'] = 'Course Name';
+$string['admin_filter_courseid'] = 'Course name';
 $string['admin_filter_courseid_help'] = 'Filter the report by the course name';
 $string['admin_filter_form'] = 'Course dedication configuration';
 $string['admin_filter_form_help'] = 'Time is estimated based in the concepts of Session and Session duration applied to log entries.
@@ -61,7 +61,7 @@ $string['privacy:metadata:block_dedication:timespent'] = 'Time spent on the cour
 $string['privacy:metadata:block_dedication:timestart'] = 'The start time of the data collected';
 $string['report_dedication'] = 'Tool Dedication Report';
 $string['report_timespent'] = 'Report Timespent';
-$string['user_dedication_datasource'] = 'Users Dedication';
+$string['user_dedication_datasource'] = 'User dedication';
 $string['dedication:addinstance'] = 'Allow to add dedication block';
 $string['dedication:myaddinstance'] = 'Allow to add dedication block to dashboard page';
 $string['dedication:viewreports'] = 'Allow to view dedication reports';
